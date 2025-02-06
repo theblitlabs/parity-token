@@ -21,14 +21,14 @@ This repository contains an ERC‑20 token implementation along with deployment 
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/parity-token/parity-token.git
+   cd parity-token
    ```
 
 2. **Install dependencies:**
 
    ```bash
-   yarn install
+   npm install
    ```
 
 3. **Configure Environment Variables:**
@@ -38,9 +38,8 @@ This repository contains an ERC‑20 token implementation along with deployment 
      ```
    - Update `.env` with your credentials:
      ```
-     MNEMONIC="your wallet mnemonic"
-     INFURA_API_KEY="your Infura API key"
-     ETHERSCAN_API_KEY="your Etherscan API key" # Optional - required for contract verification
+     PRIVATE_KEY="your wallet private key"
+     RPC_URL="your RPC URL"
      ```
 
 ## Deployment
