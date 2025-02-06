@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 contract ParityToken {
-    string public name = "Parity Token";
-    string public symbol = "PRTY";
-    uint8 public decimals = 18;
+    string public constant name = "Parity Token";
+    string public constant symbol = "PRTY";
+    uint8 public constant decimals = 18;
     uint256 public totalSupply;
 
     mapping(address => uint256) public balanceOf;
@@ -18,15 +18,15 @@ contract ParityToken {
     );
 
     constructor(uint256 initialSupply) {
-        totalSupply = initialSupply * 10 ** decimals;
-        balanceOf[msg.sender] = totalSupply;
+        totalSupply = initialSupply;
+        balanceOf[msg.sender] = initialSupply;
+        emit Transfer(address(0), msg.sender, initialSupply);
     }
 
     function transfer(address to, uint256 value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
+        require(to != address(0), "Invalid recipient");
+        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+        _transfer(msg.sender, to, value);
         return true;
     }
 
@@ -34,6 +34,7 @@ contract ParityToken {
         address spender,
         uint256 value
     ) public returns (bool success) {
+        require(spender != address(0), "Invalid spender");
         allowance[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
@@ -44,16 +45,16 @@ contract ParityToken {
         address to,
         uint256 value
     ) public returns (bool success) {
-        require(value <= balanceOf[from]);
-        require(value <= allowance[from][msg.sender]);
-        balanceOf[from] -= value;
-        balanceOf[to] += value;
+        require(to != address(0), "Invalid recipient");
+        require(value <= balanceOf[from], "Insufficient balance");
+        require(value <= allowance[from][msg.sender], "Allowance exceeded");
         allowance[from][msg.sender] -= value;
-        emit Transfer(from, to, value);
+        _transfer(from, to, value);
         return true;
     }
 
     function mint(address to, uint256 value) public returns (bool success) {
+        require(to != address(0), "Invalid recipient");
         totalSupply += value;
         balanceOf[to] += value;
         emit Transfer(address(0), to, value);
@@ -61,9 +62,10 @@ contract ParityToken {
     }
 
     function burn(uint256 value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
+        require(balanceOf[msg.sender] >= value, "Insufficient balance");
         totalSupply -= value;
         balanceOf[msg.sender] -= value;
+        emit Transfer(msg.sender, address(0), value);
         return true;
     }
 
@@ -72,10 +74,9 @@ contract ParityToken {
         uint256 value,
         bytes memory
     ) public returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
+        require(to != address(0), "Invalid recipient");
+        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+        _transfer(msg.sender, to, value);
         return true;
     }
 
@@ -84,12 +85,17 @@ contract ParityToken {
         uint256 value,
         bytes memory data
     ) public returns (bool success) {
-        require(balanceOf[msg.sender] >= value);
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        emit Transfer(msg.sender, to, value);
+        require(to != address(0), "Invalid recipient");
+        require(balanceOf[msg.sender] >= value, "Insufficient balance");
+        _transfer(msg.sender, to, value);
         (bool callSuccess, ) = to.call(data);
-        require(callSuccess);
+        require(callSuccess, "Callback failed");
         return true;
+    }
+
+    function _transfer(address from, address to, uint256 value) internal {
+        balanceOf[from] -= value;
+        balanceOf[to] += value;
+        emit Transfer(from, to, value);
     }
 }
