@@ -6,10 +6,9 @@ describe("ParityToken", function () {
   let token: any;
   let owner: Signer;
   let addr1: Signer;
-  let addr2: Signer;
 
   beforeEach(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
     const ParityToken = await ethers.getContractFactory("ParityToken");
     token = await ParityToken.deploy(ethers.parseEther("1000"));
   });
