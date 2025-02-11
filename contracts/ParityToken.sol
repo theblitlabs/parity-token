@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-contract ParityToken {
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract ParityToken is Ownable {
     string public constant name = "Parity Token";
     string public constant symbol = "PRTY";
     uint8 public constant decimals = 18;
@@ -17,7 +19,7 @@ contract ParityToken {
         uint256 value
     );
 
-    constructor(uint256 initialSupply) {
+    constructor(uint256 initialSupply) Ownable(msg.sender) {
         totalSupply = initialSupply;
         balanceOf[msg.sender] = initialSupply;
         emit Transfer(address(0), msg.sender, initialSupply);

@@ -3,7 +3,7 @@
 all: help
 
 setup:
-	@npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox @nomicfoundation/hardhat-verify @typechain/ethers-v6 @typechain/hardhat @types/chai @types/mocha @types/node chai mocha ts-node typescript
+	@npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox @nomicfoundation/hardhat-verify @typechain/ethers-v6 @typechain/hardhat @types/chai @types/mocha @types/node chai mocha ts-node typescript @openzeppelin/contracts
 
 compile:
 	@npx hardhat compile
@@ -15,7 +15,7 @@ balance:
 	@npx hardhat run scripts/balance.ts --network sepolia --address $(ADDRESS)
 
 transfer:
-	@npx hardhat run scripts/transfer.ts --network sepolia --address $(ADDRESS) --amount $(AMOUNT)
+	@ADDRESS=$(ADDRESS) AMOUNT=$(AMOUNT) npx hardhat run scripts/transfer.ts --network sepolia
 
 clean:
 	@rm -rf artifacts cache typechain-types

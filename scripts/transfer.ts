@@ -1,22 +1,42 @@
 import { ethers } from "hardhat";
 
 async function main() {
+  // Get the deployer account
+  const [deployer] = await ethers.getSigners();
+  console.log(`Using deployer address: ${deployer.address}`);
+
   const tokenAddress = process.env.CONTRACT_ADDRESS;
   if (!tokenAddress) throw new Error("CONTRACT_ADDRESS not set in .env");
 
-  // Address to transfer tokens to
-  const recipientAddress = "0x01b7b2bC30c958bA3bC0852bF1BD4efB165281Ba"; // Replace with your recipient address
+  const recipientAddress = process.env.ADDRESS;
+  if (!recipientAddress) throw new Error("ADDRESS not provided");
 
-  // Amount to transfer (e.g., 100 tokens)
-  const amount = ethers.parseUnits("10000", 18); // 1000 tokens with 18 decimals
+  const amount = process.env.AMOUNT;
+  if (!amount) throw new Error("AMOUNT not provided");
+  const amountWei = ethers.parseUnits(amount, 18);
+
+  // Get the contract instance with deployer
+  const token = await ethers.getContractAt(
+    "ParityToken",
+    tokenAddress,
+    deployer
+  );
+
+  // Check if deployer is owner
+  const owner = await token.owner();
+  if (owner !== deployer.address) {
+    throw new Error("Deployer is not contract owner - cannot mint tokens");
+  }
+
+  // Mint tokens to deployer first
+  console.log("Minting tokens to deployer...");
+  const mintTx = await token.mint(deployer.address, amountWei);
+  await mintTx.wait();
 
   console.log("Transferring tokens...");
 
-  // Get the contract instance
-  const token = await ethers.getContractAt("ParityToken", tokenAddress);
-
   // Transfer tokens
-  const tx = await token.transfer(recipientAddress, amount);
+  const tx = await token.transfer(recipientAddress, amountWei);
   await tx.wait();
 
   // Get balances

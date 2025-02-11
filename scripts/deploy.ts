@@ -33,9 +33,13 @@ async function main() {
   console.log(`Initial supply: ${initialSupply} PRTY`);
   console.log(`Deployer balance: ${deployerBalance} wei`);
 
-  const expectedAddress = new Wallet(process.env.PRIVATE_KEY!).address;
-  if (deployer.address !== expectedAddress) {
-    throw new Error("Configured private key does not match deployer address");
+  // Only verify deployer address matches private key on non-Hardhat networks
+  const network = await ethers.provider.getNetwork();
+  if (network.name !== "hardhat" && process.env.PRIVATE_KEY) {
+    const expectedAddress = new Wallet(process.env.PRIVATE_KEY).address;
+    if (deployer.address !== expectedAddress) {
+      throw new Error("Configured private key does not match deployer address");
+    }
   }
 }
 
