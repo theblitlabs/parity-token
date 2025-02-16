@@ -1,34 +1,45 @@
 # Parity Token
 
-This repository contains an ERC‑20 token implementation along with deployment and management scripts. The project is built with [Hardhat](https://hardhat.org/) and leverages [OpenZeppelin](https://openzeppelin.com/) contracts for secure and standardized token development.
+This repository contains an ERC‑20 token implementation along with deployment and management scripts. The project is built with [Foundry](https://book.getfoundry.sh/) and leverages [OpenZeppelin](https://openzeppelin.com/) contracts for secure and standardized token development.
 
 ## Features
 
 - **ERC‑20 Standard Token**: Secure implementation using OpenZeppelin's audited contracts.
 - **Deployment Scripts**: Ready-to-use scripts for both local development and testnet (e.g., Sepolia) deployments.
 - **Etherscan Verification**: Automatic integration for contract source verification.
-- **Utility Scripts**: Built-in scripts for transferring tokens and checking balances.
 - **Environment Management**: Uses environment variables for secure handling of sensitive configurations.
 
 ## Prerequisites
 
-- **Node.js** v18 or above
-- **Yarn** package manager
+- [Foundry](https://book.getfoundry.sh/getting-started/installation.html) installed
 - An Ethereum wallet with testnet ETH (for deploying to networks like Sepolia)
 
 ## Setup & Installation
 
-1. **Clone the repository:**
+1. **Clone the repository with submodules:**
 
    ```bash
-   git clone https://github.com/parity-token/parity-token.git
+   git clone --recursive https://github.com/parity-token/parity-token.git
    cd parity-token
    ```
 
-2. **Install dependencies:**
-
+   If you've already cloned the repository without `--recursive`, run:
    ```bash
-   npm install
+   make install
+   ```
+   This will initialize and update all required submodules.
+
+2. **Dependencies:**
+   The project uses git submodules for dependency management:
+   - `forge-std`: Foundry's standard library for testing and scripting
+   - `openzeppelin-contracts`: OpenZeppelin's secure contract library
+
+   Dependencies are pinned to specific commits for reproducible builds.
+
+3. **Updating Dependencies:**
+   To update all dependencies to their latest versions:
+   ```bash
+   make update
    ```
 
 3. **Configure Environment Variables:**
@@ -42,82 +53,120 @@ This repository contains an ERC‑20 token implementation along with deployment 
      RPC_URL="your RPC URL"
      ```
 
-## Deployment
+## Documentation
 
-### Local Development Network
-
-Deploy your token contract to a local Hardhat network:
-
-```bash
-npx hardhat node
-npx hardhat run scripts/deploy.ts --network localhost
-```
-
-Alternatively, use the Makefile target:
-
-```bash
-make deploy-local
-```
-
-### Sepolia Testnet
-
-Deploy your token to the Sepolia testnet:
-
-```bash
-npx hardhat run scripts/deploy.ts --network sepolia
-```
-
-Or via the Makefile:
-
-```bash
-make deploy-sepolia
-```
-
-> **Note:** The contract will be automatically verified on Etherscan during a Sepolia deployment if your `ETHERSCAN_API_KEY` is set.
+For detailed Foundry usage, visit: https://book.getfoundry.sh/
 
 ## Usage
 
-### Transferring Tokens
+The project includes a Makefile for common operations. Here are the main commands:
 
-Transfer tokens to a given address:
+### Development
 
-```bash
-npx hardhat run scripts/transfer.ts --network <network> --address 0xYourAddress --amount 100
+```shell
+# Build the project
+$ make build
+
+# Run tests
+$ make test
+
+# Run tests with gas reporting
+$ make test-gas
+
+# Format code
+$ make format
+
+# Clean build artifacts
+$ make clean
 ```
 
-Or using the Makefile:
+### Deployment
 
-```bash
-make transfer ADDRESS=0xYourAddress AMOUNT=100
+```shell
+# Start local node
+$ make anvil
+
+# Deploy to local network
+$ make deploy-local
+
+# Deploy to Sepolia testnet
+$ make deploy-sepolia
+
+# Transfer tokens
+$ make transfer RECIPIENT=0x... AMOUNT=1000
 ```
 
-### Checking Token Balance
+Note: For testnet deployments, ensure your `.env` file is properly configured with `SEPOLIA_RPC_URL` and `PRIVATE_KEY`.
 
-Check the balance of a specific address:
+## Development
 
-```bash
-npx hardhat run scripts/balance.ts --network <network> --address 0xYourAddress
-```
+This project uses [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for dependency management, ensuring reproducible builds and consistent development environments.
 
-Or using the Makefile:
+### Dependency Management
 
-```bash
-make balance ADDRESS=0xYourAddress
-```
+1. **After Pulling Changes:**
+   Always run after pulling changes that modify submodules:
+   ```bash
+   make install
+   ```
 
-## Testing
+2. **Working with Dependencies:**
+   - Update all: `make update`
+   - View status: `git submodule status`
 
-Make sure all tests pass before deploying:
+3. **Committing Changes:**
+   - Submodule changes need to be committed separately
+   - Always test after updating dependencies
+   - Verify builds are reproducible
 
-```bash
-npx hardhat test
-```
+### Development Workflow
+
+1. **Local Development:**
+   ```bash
+   # Start local node
+   make anvil
+   
+   # Deploy locally
+   make deploy-local
+   ```
+
+2. **Testing:**
+   ```bash
+   # Run all tests
+   make test
+   
+   # Run with gas reporting
+   make test-gas
+   ```
+
+3. **Code Quality:**
+   ```bash
+   # Format code
+   make format
+   
+   # Build and check sizes
+   make build
+   ```
 
 ## Best Practices & Security
 
-- **Secure Credentials:** Never commit your `.env` file or sensitive information like mnemonics.
-- **Audited Contracts:** This token utilizes OpenZeppelin contracts, ensuring adherence to common security best practices.
-- **Automated Verification:** Etherscan verification offers transparency and trust in the deployed smart contract.
+### Security Considerations
+- **Secure Credentials:** Never commit your `.env` file or expose private keys
+- **Audited Dependencies:** Using OpenZeppelin's audited contracts
+- **Automated Verification:** Etherscan verification in deployment process
+- **Reproducible Builds:** Dependencies pinned via git submodules
+
+### Development Guidelines
+- **Testing:** Write comprehensive tests for all new features
+- **Gas Optimization:** Monitor gas usage with `make test-gas`
+- **Code Style:** Use `make format` before committing
+- **Dependencies:** Document any new dependencies added
+
+### CI/CD Pipeline
+- Automated testing on pull requests
+- Security analysis with Slither
+- Gas usage monitoring
+- Testnet deployment verification
 
 ## Contributing
 
