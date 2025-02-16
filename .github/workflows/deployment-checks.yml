@@ -39,12 +39,12 @@ jobs:
       - name: Verify deployment script compilation
         run: forge script script/Deploy.s.sol:DeployScript -vvv
 
-      - name: Run deployment simulation (dry run)
+      - name: Run deployment simulation
         run: |
           forge script script/Deploy.s.sol:DeployScript \
-          --rpc-url https://eth-sepolia.public.blastapi.io \
+          --rpc-url ${{ secrets.SEPOLIA_RPC_URL }} \
           -vvv \
-          --dry-run
+          --simulate
 
   verify-contract-size:
     name: Contract size check
