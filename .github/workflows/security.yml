@@ -64,4 +64,4 @@ jobs:
       - name: Run Mythril Security Analysis
         uses: docker://mythril/myth
         with:
-          args: analyze src/*.sol --solc solc-0.8.19 --execution-timeout 300
+          args: analyze src/*.sol --solv 0.8.20 --execution-timeout 300
