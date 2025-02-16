@@ -1,31 +1,56 @@
-.PHONY: all compile deploy balance transfer clean setup help
+.PHONY: all install build test clean deploy-local deploy-sepolia anvil transfer
 
-all: help
+all: install build test
 
-setup:
-	@npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox @nomicfoundation/hardhat-verify @typechain/ethers-v6 @typechain/hardhat @types/chai @types/mocha @types/node chai mocha ts-node typescript @openzeppelin/contracts
+# Install dependencies
+install:
+	forge install
 
-compile:
-	@npx hardhat compile
+# Build the project
+build:
+	forge build
 
-deploy: compile
-	@npx hardhat run scripts/deploy.ts --network sepolia
+# Run tests
+test:
+	forge test -vv
 
-balance:
-	@npx hardhat run scripts/balance.ts --network sepolia --address $(ADDRESS)
+# Run tests with gas report
+test-gas:
+	forge test -vv --gas-report
 
-transfer:
-	@ADDRESS=$(ADDRESS) AMOUNT=$(AMOUNT) npx hardhat run scripts/transfer.ts --network sepolia
-
+# Clean build artifacts
 clean:
-	@rm -rf artifacts cache typechain-types
+	forge clean
 
-help:
-	@echo "Available commands:"
-	@echo "  make setup       - Install dependencies"
-	@echo "  make compile     - Compile smart contracts"
-	@echo "  make deploy      - Deploy to Sepolia network"
-	@echo "  make balance ADDRESS=0x... - Check token balance"
-	@echo "  make transfer ADDRESS=0x... AMOUNT=100 - Transfer tokens"
-	@echo "  make clean       - Clean build artifacts"
-	@echo "  make help        - Show this help message" 
+# Start local node
+anvil:
+	anvil
+
+# Deploy to local network
+deploy-local:
+	forge script script/Deploy.s.sol:DeployScript \
+		--rpc-url http://localhost:8545 \
+		--broadcast \
+		--ffi
+
+# Deploy to Sepolia
+deploy-sepolia:
+	forge script script/Deploy.s.sol:DeployScript \
+		--rpc-url ${SEPOLIA_RPC_URL} \
+		--private-key ${PRIVATE_KEY} \
+		--broadcast \
+		--verify
+
+# Transfer tokens (Usage: make transfer RECIPIENT=0x... AMOUNT=1000)
+transfer:
+	forge script script/Transfer.s.sol:TransferScript \
+		--rpc-url http://localhost:8545 \
+		--broadcast
+
+# Format code
+format:
+	forge fmt
+
+# Update dependencies
+update:
+	forge update 

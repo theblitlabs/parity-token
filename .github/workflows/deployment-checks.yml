@@ -1,0 +1,68 @@
+name: Testnet Deployment Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify-deployment:
+    name: Verify deployment script
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install Dependencies
+        run: forge install
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Verify deployment script compilation
+        run: forge script script/Deploy.s.sol:DeployScript -vvv
+
+      - name: Run deployment simulation
+        run: |
+          forge script script/Deploy.s.sol:DeployScript \
+          --rpc-url http://localhost:8545 \
+          --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+          --sig "run()" \
+          -vvv --fork-url https://eth-sepolia.public.blastapi.io --broadcast --verify
+
+  verify-contract-size:
+    name: Contract size check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Check contract sizes
+        run: forge build --sizes
+
+  verify-storage-layout:
+    name: Storage layout verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Check storage layout
+        run: forge inspect src/ParityToken.sol:ParityToken storage-layout

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract ParityToken is Ownable {
     string public constant name = "Parity Token";
@@ -13,11 +13,7 @@ contract ParityToken is Ownable {
     mapping(address => mapping(address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     constructor(uint256 initialSupply) Ownable(msg.sender) {
         totalSupply = initialSupply;
@@ -32,21 +28,14 @@ contract ParityToken is Ownable {
         return true;
     }
 
-    function approve(
-        address spender,
-        uint256 value
-    ) public returns (bool success) {
+    function approve(address spender, uint256 value) public returns (bool success) {
         require(spender != address(0), "Invalid spender");
         allowance[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public returns (bool success) {
+    function transferFrom(address from, address to, uint256 value) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(value <= balanceOf[from], "Insufficient balance");
         require(value <= allowance[from][msg.sender], "Allowance exceeded");
@@ -71,26 +60,18 @@ contract ParityToken is Ownable {
         return true;
     }
 
-    function transferWithData(
-        address to,
-        uint256 value,
-        bytes memory
-    ) public returns (bool success) {
+    function transferWithData(address to, uint256 value, bytes memory) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
         _transfer(msg.sender, to, value);
         return true;
     }
 
-    function transferWithDataAndCallback(
-        address to,
-        uint256 value,
-        bytes memory data
-    ) public returns (bool success) {
+    function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
         _transfer(msg.sender, to, value);
-        (bool callSuccess, ) = to.call(data);
+        (bool callSuccess,) = to.call(data);
         require(callSuccess, "Callback failed");
         return true;
     }

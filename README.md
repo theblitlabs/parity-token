@@ -1,19 +1,17 @@
 # Parity Token
 
-This repository contains an ERC‑20 token implementation along with deployment and management scripts. The project is built with [Hardhat](https://hardhat.org/) and leverages [OpenZeppelin](https://openzeppelin.com/) contracts for secure and standardized token development.
+This repository contains an ERC‑20 token implementation along with deployment and management scripts. The project is built with [Foundry](https://book.getfoundry.sh/) and leverages [OpenZeppelin](https://openzeppelin.com/) contracts for secure and standardized token development.
 
 ## Features
 
 - **ERC‑20 Standard Token**: Secure implementation using OpenZeppelin's audited contracts.
 - **Deployment Scripts**: Ready-to-use scripts for both local development and testnet (e.g., Sepolia) deployments.
 - **Etherscan Verification**: Automatic integration for contract source verification.
-- **Utility Scripts**: Built-in scripts for transferring tokens and checking balances.
 - **Environment Management**: Uses environment variables for secure handling of sensitive configurations.
 
 ## Prerequisites
 
-- **Node.js** v18 or above
-- **Yarn** package manager
+- [Foundry](https://book.getfoundry.sh/getting-started/installation.html) installed
 - An Ethereum wallet with testnet ETH (for deploying to networks like Sepolia)
 
 ## Setup & Installation
@@ -28,7 +26,7 @@ This repository contains an ERC‑20 token implementation along with deployment 
 2. **Install dependencies:**
 
    ```bash
-   npm install
+   forge install
    ```
 
 3. **Configure Environment Variables:**
@@ -42,82 +40,61 @@ This repository contains an ERC‑20 token implementation along with deployment 
      RPC_URL="your RPC URL"
      ```
 
-## Deployment
+## Documentation
 
-### Local Development Network
-
-Deploy your token contract to a local Hardhat network:
-
-```bash
-npx hardhat node
-npx hardhat run scripts/deploy.ts --network localhost
-```
-
-Alternatively, use the Makefile target:
-
-```bash
-make deploy-local
-```
-
-### Sepolia Testnet
-
-Deploy your token to the Sepolia testnet:
-
-```bash
-npx hardhat run scripts/deploy.ts --network sepolia
-```
-
-Or via the Makefile:
-
-```bash
-make deploy-sepolia
-```
-
-> **Note:** The contract will be automatically verified on Etherscan during a Sepolia deployment if your `ETHERSCAN_API_KEY` is set.
+For detailed Foundry usage, visit: https://book.getfoundry.sh/
 
 ## Usage
 
-### Transferring Tokens
+### Build
 
-Transfer tokens to a given address:
-
-```bash
-npx hardhat run scripts/transfer.ts --network <network> --address 0xYourAddress --amount 100
+```shell
+$ forge build
 ```
 
-Or using the Makefile:
+### Test
 
-```bash
-make transfer ADDRESS=0xYourAddress AMOUNT=100
+```shell
+$ forge test
 ```
 
-### Checking Token Balance
+### Format
 
-Check the balance of a specific address:
-
-```bash
-npx hardhat run scripts/balance.ts --network <network> --address 0xYourAddress
+```shell
+$ forge fmt
 ```
 
-Or using the Makefile:
+### Gas Snapshots
 
-```bash
-make balance ADDRESS=0xYourAddress
+```shell
+$ forge snapshot
 ```
 
-## Testing
+### Local Development Network
 
-Make sure all tests pass before deploying:
+```shell
+$ anvil
+```
 
-```bash
-npx hardhat test
+### Deploy
+
+To deploy to a network:
+
+```shell
+$ forge script script/Deploy.s.sol:DeployScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+For Sepolia deployment:
+
+```shell
+$ forge script script/Deploy.s.sol:DeployScript --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify
 ```
 
 ## Best Practices & Security
 
-- **Secure Credentials:** Never commit your `.env` file or sensitive information like mnemonics.
+- **Secure Credentials:** Never commit your `.env` file or sensitive information like private keys.
 - **Audited Contracts:** This token utilizes OpenZeppelin contracts, ensuring adherence to common security best practices.
-- **Automated Verification:** Etherscan verification offers transparency and trust in the deployed smart contract.
+- **Automated Verification:** Etherscan verification is integrated into the deployment process.
 
 ## Contributing
 
