@@ -68,13 +68,13 @@ contract ParityToken is Ownable {
     }
 
     /// @notice Transfer tokens with additional data and callback
-    /// @dev This function performs a low-level call after the transfer.
-    ///      The receiving contract MUST properly handle the callback to prevent reentrancy.
+    /// @dev This function performs a callback after the transfer.
+    ///      The receiving contract MUST implement a callback function.
     /// @param to The recipient address
     /// @param value The amount of tokens to transfer
     /// @param data The callback data to be passed to the recipient
-    /// @return success True if transfer and callback succeeded
-    function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool success) {
+    /// @return True if transfer and callback succeeded
+    function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
         require(to.code.length > 0, "Recipient must be a contract");
@@ -82,21 +82,36 @@ contract ParityToken is Ownable {
         // Update balances before the callback to prevent reentrancy
         _transfer(msg.sender, to, value);
 
-        // Perform the callback with gas stipend and proper error handling
-        (bool callSuccess, bytes memory returnData) = to.call{gas: 50000}(data);
-        if (!callSuccess) {
-            // Revert with the error message if available
-            if (returnData.length > 0) {
-                assembly {
-                    let returnDataSize := mload(returnData)
-                    revert(add(32, returnData), returnDataSize)
-                }
-            } else {
-                revert("Callback failed");
-            }
-        }
+        // Perform the callback
+        (bool callSuccess, bytes memory returnData) = to.call(data);
+        require(callSuccess, returnData.length > 0 ? _getRevertMsg(returnData) : "Callback failed");
 
         return true;
+    }
+
+    /// @dev Extract revert message from return data
+    /// @param returnData The return data from the call
+    /// @return The revert message string
+    function _getRevertMsg(bytes memory returnData) internal pure returns (string memory) {
+        // If the returnData length is less than 68, then the transaction failed silently (without a revert message)
+        if (returnData.length < 68) return "Transaction reverted silently";
+        // Extract the revert message
+        bytes memory revertData = slice(returnData, 4, returnData.length - 4);
+        return abi.decode(revertData, (string));
+    }
+
+    /// @dev Slice a bytes array
+    /// @param data The bytes array to slice
+    /// @param start The start index
+    /// @param length The length to slice
+    /// @return result The sliced bytes array
+    function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory result) {
+        require(start + length <= data.length, "Slice out of bounds");
+        result = new bytes(length);
+        for (uint256 i = 0; i < length; i++) {
+            result[i] = data[start + i];
+        }
+        return result;
     }
 
     function _transfer(address from, address to, uint256 value) internal {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.20;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {ParityToken} from "../src/ParityToken.sol";
@@ -25,7 +25,7 @@ contract ParityTokenTest is Test {
         vm.deal(user2, 1 ether);
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(token.name(), "Parity Token");
         assertEq(token.symbol(), "PRTY");
         assertEq(token.decimals(), 18);
@@ -146,7 +146,7 @@ contract ParityTokenTest is Test {
 contract MockCallback {
     bool public callbackReceived;
 
-    function onTokenReceived(address from, uint256 amount) external {
+    function onTokenReceived(address /* from */, uint256 /* amount */) external {
         callbackReceived = true;
     }
 }
