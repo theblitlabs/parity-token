@@ -42,7 +42,7 @@ jobs:
       - name: Run deployment simulation
         run: |
           forge script script/Deploy.s.sol:DeployScript \
-          --rpc-url ${{ secrets.SEPOLIA_RPC_URL }} \
+          --fork-url https://eth-sepolia.public.blastapi.io \
           -vvv \
           --simulate
 
