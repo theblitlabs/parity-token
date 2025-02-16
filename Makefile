@@ -2,9 +2,9 @@
 
 all: install build test
 
-# Install dependencies
+# Install and update dependencies
 install:
-	forge install
+	git submodule update --init --recursive
 
 # Build the project
 build:
@@ -51,6 +51,6 @@ transfer:
 format:
 	forge fmt
 
-# Update dependencies
+# Update dependencies to their latest versions
 update:
-	forge update 
+	git submodule update --remote --merge

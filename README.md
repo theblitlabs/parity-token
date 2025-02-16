@@ -16,17 +16,30 @@ This repository contains an ERC‑20 token implementation along with deployment 
 
 ## Setup & Installation
 
-1. **Clone the repository:**
+1. **Clone the repository with submodules:**
 
    ```bash
-   git clone https://github.com/parity-token/parity-token.git
+   git clone --recursive https://github.com/parity-token/parity-token.git
    cd parity-token
    ```
 
-2. **Install dependencies:**
-
+   If you've already cloned the repository without `--recursive`, run:
    ```bash
-   forge install
+   make install
+   ```
+   This will initialize and update all required submodules.
+
+2. **Dependencies:**
+   The project uses git submodules for dependency management:
+   - `forge-std`: Foundry's standard library for testing and scripting
+   - `openzeppelin-contracts`: OpenZeppelin's secure contract library
+
+   Dependencies are pinned to specific commits for reproducible builds.
+
+3. **Updating Dependencies:**
+   To update all dependencies to their latest versions:
+   ```bash
+   make update
    ```
 
 3. **Configure Environment Variables:**
@@ -46,55 +59,114 @@ For detailed Foundry usage, visit: https://book.getfoundry.sh/
 
 ## Usage
 
-### Build
+The project includes a Makefile for common operations. Here are the main commands:
+
+### Development
 
 ```shell
-$ forge build
+# Build the project
+$ make build
+
+# Run tests
+$ make test
+
+# Run tests with gas reporting
+$ make test-gas
+
+# Format code
+$ make format
+
+# Clean build artifacts
+$ make clean
 ```
 
-### Test
+### Deployment
 
 ```shell
-$ forge test
+# Start local node
+$ make anvil
+
+# Deploy to local network
+$ make deploy-local
+
+# Deploy to Sepolia testnet
+$ make deploy-sepolia
+
+# Transfer tokens
+$ make transfer RECIPIENT=0x... AMOUNT=1000
 ```
 
-### Format
+Note: For testnet deployments, ensure your `.env` file is properly configured with `SEPOLIA_RPC_URL` and `PRIVATE_KEY`.
 
-```shell
-$ forge fmt
-```
+## Development
 
-### Gas Snapshots
+This project uses [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for dependency management, ensuring reproducible builds and consistent development environments.
 
-```shell
-$ forge snapshot
-```
+### Dependency Management
 
-### Local Development Network
+1. **After Pulling Changes:**
+   Always run after pulling changes that modify submodules:
+   ```bash
+   make install
+   ```
 
-```shell
-$ anvil
-```
+2. **Working with Dependencies:**
+   - Update all: `make update`
+   - View status: `git submodule status`
 
-### Deploy
+3. **Committing Changes:**
+   - Submodule changes need to be committed separately
+   - Always test after updating dependencies
+   - Verify builds are reproducible
 
-To deploy to a network:
+### Development Workflow
 
-```shell
-$ forge script script/Deploy.s.sol:DeployScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+1. **Local Development:**
+   ```bash
+   # Start local node
+   make anvil
+   
+   # Deploy locally
+   make deploy-local
+   ```
 
-For Sepolia deployment:
+2. **Testing:**
+   ```bash
+   # Run all tests
+   make test
+   
+   # Run with gas reporting
+   make test-gas
+   ```
 
-```shell
-$ forge script script/Deploy.s.sol:DeployScript --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify
-```
+3. **Code Quality:**
+   ```bash
+   # Format code
+   make format
+   
+   # Build and check sizes
+   make build
+   ```
 
 ## Best Practices & Security
 
-- **Secure Credentials:** Never commit your `.env` file or sensitive information like private keys.
-- **Audited Contracts:** This token utilizes OpenZeppelin contracts, ensuring adherence to common security best practices.
-- **Automated Verification:** Etherscan verification is integrated into the deployment process.
+### Security Considerations
+- **Secure Credentials:** Never commit your `.env` file or expose private keys
+- **Audited Dependencies:** Using OpenZeppelin's audited contracts
+- **Automated Verification:** Etherscan verification in deployment process
+- **Reproducible Builds:** Dependencies pinned via git submodules
+
+### Development Guidelines
+- **Testing:** Write comprehensive tests for all new features
+- **Gas Optimization:** Monitor gas usage with `make test-gas`
+- **Code Style:** Use `make format` before committing
+- **Dependencies:** Document any new dependencies added
+
+### CI/CD Pipeline
+- Automated testing on pull requests
+- Security analysis with Slither
+- Gas usage monitoring
+- Testnet deployment verification
 
 ## Contributing
 
