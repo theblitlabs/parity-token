@@ -42,10 +42,11 @@ jobs:
       - name: Run deployment simulation
         run: |
           forge script script/Deploy.s.sol:DeployScript \
-          --rpc-url http://localhost:8545 \
+          --rpc-url https://eth-sepolia.public.blastapi.io \
           --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
-          --sig "run()" \
-          -vvv --fork-url https://eth-sepolia.public.blastapi.io --broadcast --verify
+          -vvv \
+          --broadcast \
+          --verify
 
   verify-contract-size:
     name: Contract size check
