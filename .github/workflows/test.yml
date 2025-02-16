@@ -30,8 +30,14 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          git submodule add https://github.com/foundry-rs/forge-std lib/forge-std
-          git submodule add https://github.com/OpenZeppelin/openzeppelin-contracts lib/openzeppelin-contracts
+          if [ ! -d "lib/forge-std" ] || [ -z "$(ls -A lib/forge-std)" ]; then
+            rm -rf lib/forge-std
+            git submodule add https://github.com/foundry-rs/forge-std lib/forge-std
+          fi
+          if [ ! -d "lib/openzeppelin-contracts" ] || [ -z "$(ls -A lib/openzeppelin-contracts)" ]; then
+            rm -rf lib/openzeppelin-contracts
+            git submodule add https://github.com/OpenZeppelin/openzeppelin-contracts lib/openzeppelin-contracts
+          fi
           git submodule update --init --recursive
 
       - name: Run Forge fmt
