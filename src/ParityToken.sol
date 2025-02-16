@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.20;
 
 import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
@@ -67,12 +67,35 @@ contract ParityToken is Ownable {
         return true;
     }
 
+    /// @notice Transfer tokens with additional data and callback
+    /// @dev This function performs a low-level call after the transfer.
+    ///      The receiving contract MUST properly handle the callback to prevent reentrancy.
+    /// @param to The recipient address
+    /// @param value The amount of tokens to transfer
+    /// @param data The callback data to be passed to the recipient
+    /// @return success True if transfer and callback succeeded
     function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
+        require(to.code.length > 0, "Recipient must be a contract");
+
+        // Update balances before the callback to prevent reentrancy
         _transfer(msg.sender, to, value);
-        (bool callSuccess,) = to.call(data);
-        require(callSuccess, "Callback failed");
+
+        // Perform the callback with gas stipend and proper error handling
+        (bool callSuccess, bytes memory returnData) = to.call{gas: 50000}(data);
+        if (!callSuccess) {
+            // Revert with the error message if available
+            if (returnData.length > 0) {
+                assembly {
+                    let returnDataSize := mload(returnData)
+                    revert(add(32, returnData), returnDataSize)
+                }
+            } else {
+                revert("Callback failed");
+            }
+        }
+
         return true;
     }
 
