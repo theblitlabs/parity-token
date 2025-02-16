@@ -12,11 +12,7 @@ contract ParityTokenTest is Test {
     uint256 public constant INITIAL_SUPPLY = 100_000_000 * 10 ** 18;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function setUp() public {
         owner = address(this);
@@ -126,17 +122,9 @@ contract ParityTokenTest is Test {
         // Deploy a mock contract that accepts callbacks
         MockCallback mockReceiver = new MockCallback();
         uint256 amount = 1000 * 10 ** 18;
-        bytes memory data = abi.encodeWithSignature(
-            "onTokenReceived(address,uint256)",
-            owner,
-            amount
-        );
+        bytes memory data = abi.encodeWithSignature("onTokenReceived(address,uint256)", owner, amount);
 
-        bool success = token.transferWithDataAndCallback(
-            address(mockReceiver),
-            amount,
-            data
-        );
+        bool success = token.transferWithDataAndCallback(address(mockReceiver), amount, data);
         assertTrue(success);
         assertEq(token.balanceOf(address(mockReceiver)), amount);
         assertEq(token.balanceOf(owner), INITIAL_SUPPLY - amount);
