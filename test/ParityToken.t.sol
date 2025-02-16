@@ -146,7 +146,7 @@ contract ParityTokenTest is Test {
 contract MockCallback {
     bool public callbackReceived;
 
-    function onTokenReceived(address /* from */, uint256 /* amount */) external {
+    function onTokenReceived(address, /* from */ uint256 /* amount */ ) external {
         callbackReceived = true;
     }
 }
