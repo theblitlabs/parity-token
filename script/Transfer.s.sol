@@ -9,7 +9,7 @@ contract TransferScript is Script {
         // Get token address from environment
         address tokenAddress = vm.envAddress("TOKEN_ADDRESS");
         // Get recipient address from command line argument
-        address recipient = vm.envAddress("RECIPIENT");
+        address recipient = vm.envAddress("ADDRESS");
         // Get amount from command line argument (in whole tokens)
         uint256 amount = vm.envUint("AMOUNT");
         // Convert to wei (18 decimals)
@@ -29,7 +29,9 @@ contract TransferScript is Script {
         ParityToken token = ParityToken(tokenAddress);
 
         // Get initial balances
-        uint256 initialSenderBalance = token.balanceOf(vm.addr(deployerPrivateKey));
+        uint256 initialSenderBalance = token.balanceOf(
+            vm.addr(deployerPrivateKey)
+        );
         uint256 initialRecipientBalance = token.balanceOf(recipient);
 
         console2.log("Transferring tokens:");
@@ -37,18 +39,36 @@ contract TransferScript is Script {
         console2.log("From:", vm.addr(deployerPrivateKey));
         console2.log("To:", recipient);
         console2.log("Amount:", amount, "PRTY");
-        console2.log("Initial sender balance:", initialSenderBalance / 10 ** 18, "PRTY");
-        console2.log("Initial recipient balance:", initialRecipientBalance / 10 ** 18, "PRTY");
+        console2.log(
+            "Initial sender balance:",
+            initialSenderBalance / 10 ** 18,
+            "PRTY"
+        );
+        console2.log(
+            "Initial recipient balance:",
+            initialRecipientBalance / 10 ** 18,
+            "PRTY"
+        );
 
         require(token.transfer(recipient, amountInWei), "Transfer failed");
 
         // Get final balances
-        uint256 finalSenderBalance = token.balanceOf(vm.addr(deployerPrivateKey));
+        uint256 finalSenderBalance = token.balanceOf(
+            vm.addr(deployerPrivateKey)
+        );
         uint256 finalRecipientBalance = token.balanceOf(recipient);
 
         console2.log("Transfer successful!");
-        console2.log("Final sender balance:", finalSenderBalance / 10 ** 18, "PRTY");
-        console2.log("Final recipient balance:", finalRecipientBalance / 10 ** 18, "PRTY");
+        console2.log(
+            "Final sender balance:",
+            finalSenderBalance / 10 ** 18,
+            "PRTY"
+        );
+        console2.log(
+            "Final recipient balance:",
+            finalRecipientBalance / 10 ** 18,
+            "PRTY"
+        );
 
         vm.stopBroadcast();
     }
