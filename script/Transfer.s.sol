@@ -48,16 +48,8 @@ contract TransferScript is Script {
 
         console2.log("\n=== Pre-Transfer Balances ===");
         console2.log("Sender ETH balance:", senderEthBalance / 1e18, "ETH");
-        console2.log(
-            "Sender token balance:",
-            senderTokenBalance / 1e18,
-            "PRTY"
-        );
-        console2.log(
-            "Recipient token balance:",
-            recipientTokenBalance / 1e18,
-            "PRTY"
-        );
+        console2.log("Sender token balance:", senderTokenBalance / 1e18, "PRTY");
+        console2.log("Recipient token balance:", recipientTokenBalance / 1e18, "PRTY");
 
         // Validate token balance
         if (senderTokenBalance < amountInWei) {
@@ -82,11 +74,7 @@ contract TransferScript is Script {
             console2.log("\n!!! INSUFFICIENT ETH FOR GAS !!!");
             console2.log("Required:", estimatedGasCost / 1e18, "ETH");
             console2.log("Available:", senderEthBalance / 1e18, "ETH");
-            console2.log(
-                "Shortfall:",
-                (estimatedGasCost - senderEthBalance) / 1e18,
-                "ETH"
-            );
+            console2.log("Shortfall:", (estimatedGasCost - senderEthBalance) / 1e18, "ETH");
 
             if (chainId == 11155111) {
                 console2.log("\nTo get Sepolia ETH, use one of these faucets:");
@@ -117,27 +105,26 @@ contract TransferScript is Script {
 
         console2.log("\n=== Transfer Successful! ===");
         console2.log("New sender balance:", finalSenderBalance / 1e18, "PRTY");
-        console2.log(
-            "New recipient balance:",
-            finalRecipientBalance / 1e18,
-            "PRTY"
-        );
-        console2.log(
-            "Transaction cost:",
-            (senderEthBalance - sender.balance) / 1e18,
-            "ETH"
-        );
+        console2.log("New recipient balance:", finalRecipientBalance / 1e18, "PRTY");
+        console2.log("Transaction cost:", (senderEthBalance - sender.balance) / 1e18, "ETH");
     }
 
     function _getPrivateKey() internal view returns (uint256) {
+        // Check if we're in CI environment
+        bool isCI;
+        try vm.envBool("CI") returns (bool ci) {
+            isCI = ci;
+        } catch {
+            isCI = false;
+        }
+
         try vm.envUint("PRIVATE_KEY") returns (uint256 key) {
             if (key == 0) revert InvalidPrivateKey();
             return key;
         } catch {
-            // Only use default key for local testing
-            if (block.chainid == 31337) {
-                return
-                    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+            // Use default key for local testing or CI
+            if (block.chainid == 31337 || isCI) {
+                return 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
             }
             revert InvalidPrivateKey();
         }
@@ -173,9 +160,7 @@ contract TransferScript is Script {
         return (block.basefee * 12) / 10; // 120% of base fee
     }
 
-    function _getNetworkName(
-        uint256 chainId
-    ) internal pure returns (string memory) {
+    function _getNetworkName(uint256 chainId) internal pure returns (string memory) {
         if (chainId == 11155111) {
             return "Sepolia";
         } else if (chainId == 1) {

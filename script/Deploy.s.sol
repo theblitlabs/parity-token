@@ -61,11 +61,7 @@ contract DeployScript is Script {
             console2.log("\n!!! INSUFFICIENT FUNDS !!!");
             console2.log("Required:", estimatedGasCost / 1e18, "ETH");
             console2.log("Available:", deployerBalance / 1e18, "ETH");
-            console2.log(
-                "Shortfall:",
-                (estimatedGasCost - deployerBalance) / 1e18,
-                "ETH"
-            );
+            console2.log("Shortfall:", (estimatedGasCost - deployerBalance) / 1e18, "ETH");
 
             if (chainId == 11155111) {
                 console2.log("\nTo get Sepolia ETH, use one of these faucets:");
@@ -108,14 +104,21 @@ contract DeployScript is Script {
     }
 
     function _getPrivateKey() internal view returns (uint256) {
+        // Check if we're in CI environment
+        bool isCI;
+        try vm.envBool("CI") returns (bool ci) {
+            isCI = ci;
+        } catch {
+            isCI = false;
+        }
+
         try vm.envUint("PRIVATE_KEY") returns (uint256 key) {
             if (key == 0) revert InvalidPrivateKey();
             return key;
         } catch {
-            // Only use default key for local testing
-            if (block.chainid == 31337) {
-                return
-                    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+            // Use default key for local testing or CI
+            if (block.chainid == 31337 || isCI) {
+                return 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
             }
             revert InvalidPrivateKey();
         }
