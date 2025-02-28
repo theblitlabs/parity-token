@@ -41,10 +41,17 @@ deploy-sepolia:
 		--broadcast \
 		--verify
 
-# Transfer tokens (Usage: make transfer RECIPIENT=0x... AMOUNT=1000)
+# Transfer tokens (Usage: make transfer ADDRESS=0x... AMOUNT=1000)
 transfer:
 	forge script script/Transfer.s.sol:TransferScript \
 		--rpc-url http://localhost:8545 \
+		--broadcast
+
+# Transfer tokens (Usage: make transfer-sepolia ADDRESS=0x... AMOUNT=1000 SEPOLIA_RPC_URL=https://1rpc.io/sepolia PRIVATE_KEY=0x... TOKEN_ADDRESS=0x...)
+transfer-sepolia:
+	forge script script/Transfer.s.sol:TransferScript \
+		--rpc-url ${SEPOLIA_RPC_URL} \
+		--private-key ${PRIVATE_KEY} \
 		--broadcast
 
 # Format code
