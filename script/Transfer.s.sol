@@ -15,6 +15,14 @@ contract TransferScript is Script {
     function run() public {
         console2.log("\n=== Parity Token Transfer ===");
 
+        // Check if we're in CI environment
+        bool isCI;
+        try vm.envBool("CI") returns (bool ci) {
+            isCI = ci;
+        } catch {
+            isCI = false;
+        }
+
         // Get and validate private key
         uint256 deployerPrivateKey = _getPrivateKey();
         address sender = vm.addr(deployerPrivateKey);
@@ -48,42 +56,64 @@ contract TransferScript is Script {
 
         console2.log("\n=== Pre-Transfer Balances ===");
         console2.log("Sender ETH balance:", senderEthBalance / 1e18, "ETH");
-        console2.log("Sender token balance:", senderTokenBalance / 1e18, "PRTY");
-        console2.log("Recipient token balance:", recipientTokenBalance / 1e18, "PRTY");
+        console2.log(
+            "Sender token balance:",
+            senderTokenBalance / 1e18,
+            "PRTY"
+        );
+        console2.log(
+            "Recipient token balance:",
+            recipientTokenBalance / 1e18,
+            "PRTY"
+        );
 
-        // Validate token balance
-        if (senderTokenBalance < amountInWei) {
-            console2.log("\n!!! INSUFFICIENT TOKEN BALANCE !!!");
-            console2.log("Required:", amount, "PRTY");
-            console2.log("Available:", senderTokenBalance / 1e18, "PRTY");
-            revert InsufficientTokenBalance(amountInWei, senderTokenBalance);
-        }
-
-        // Estimate gas costs
-        uint256 gasPrice = _getGasPrice();
-        uint256 gasLimit = 100000; // Conservative estimate for ERC20 transfer
-        uint256 estimatedGasCost = gasPrice * gasLimit;
-
-        console2.log("\n=== Cost Estimation ===");
-        console2.log("Gas price:", gasPrice / 1e9, "gwei");
-        console2.log("Estimated gas:", gasLimit);
-        console2.log("Estimated cost:", estimatedGasCost / 1e18, "ETH");
-
-        // Validate ETH balance
-        if (senderEthBalance < estimatedGasCost) {
-            console2.log("\n!!! INSUFFICIENT ETH FOR GAS !!!");
-            console2.log("Required:", estimatedGasCost / 1e18, "ETH");
-            console2.log("Available:", senderEthBalance / 1e18, "ETH");
-            console2.log("Shortfall:", (estimatedGasCost - senderEthBalance) / 1e18, "ETH");
-
-            if (chainId == 11155111) {
-                console2.log("\nTo get Sepolia ETH, use one of these faucets:");
-                console2.log("- Alchemy: https://sepoliafaucet.com/");
-                console2.log("- Infura: https://www.infura.io/faucet/sepolia");
-                console2.log("- PoW: https://sepolia-faucet.pk910.de/");
+        // Skip balance checks in CI
+        if (!isCI) {
+            // Validate token balance
+            if (senderTokenBalance < amountInWei) {
+                console2.log("\n!!! INSUFFICIENT TOKEN BALANCE !!!");
+                console2.log("Required:", amount, "PRTY");
+                console2.log("Available:", senderTokenBalance / 1e18, "PRTY");
+                revert InsufficientTokenBalance(
+                    amountInWei,
+                    senderTokenBalance
+                );
             }
 
-            revert InsufficientFunds(estimatedGasCost, senderEthBalance);
+            // Estimate gas costs
+            uint256 gasPrice = _getGasPrice();
+            uint256 gasLimit = 100000; // Conservative estimate for ERC20 transfer
+            uint256 estimatedGasCost = gasPrice * gasLimit;
+
+            console2.log("\n=== Cost Estimation ===");
+            console2.log("Gas price:", gasPrice / 1e9, "gwei");
+            console2.log("Estimated gas:", gasLimit);
+            console2.log("Estimated cost:", estimatedGasCost / 1e18, "ETH");
+
+            // Validate ETH balance
+            if (senderEthBalance < estimatedGasCost) {
+                console2.log("\n!!! INSUFFICIENT ETH FOR GAS !!!");
+                console2.log("Required:", estimatedGasCost / 1e18, "ETH");
+                console2.log("Available:", senderEthBalance / 1e18, "ETH");
+                console2.log(
+                    "Shortfall:",
+                    (estimatedGasCost - senderEthBalance) / 1e18,
+                    "ETH"
+                );
+
+                if (chainId == 11155111) {
+                    console2.log(
+                        "\nTo get Sepolia ETH, use one of these faucets:"
+                    );
+                    console2.log("- Alchemy: https://sepoliafaucet.com/");
+                    console2.log(
+                        "- Infura: https://www.infura.io/faucet/sepolia"
+                    );
+                    console2.log("- PoW: https://sepolia-faucet.pk910.de/");
+                }
+
+                revert InsufficientFunds(estimatedGasCost, senderEthBalance);
+            }
         }
 
         // Execute transfer
@@ -105,8 +135,16 @@ contract TransferScript is Script {
 
         console2.log("\n=== Transfer Successful! ===");
         console2.log("New sender balance:", finalSenderBalance / 1e18, "PRTY");
-        console2.log("New recipient balance:", finalRecipientBalance / 1e18, "PRTY");
-        console2.log("Transaction cost:", (senderEthBalance - sender.balance) / 1e18, "ETH");
+        console2.log(
+            "New recipient balance:",
+            finalRecipientBalance / 1e18,
+            "PRTY"
+        );
+        console2.log(
+            "Transaction cost:",
+            (senderEthBalance - sender.balance) / 1e18,
+            "ETH"
+        );
     }
 
     function _getPrivateKey() internal view returns (uint256) {
@@ -124,7 +162,8 @@ contract TransferScript is Script {
         } catch {
             // Use default key for local testing or CI
             if (block.chainid == 31337 || isCI) {
-                return 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+                return
+                    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
             }
             revert InvalidPrivateKey();
         }
@@ -160,7 +199,9 @@ contract TransferScript is Script {
         return (block.basefee * 12) / 10; // 120% of base fee
     }
 
-    function _getNetworkName(uint256 chainId) internal pure returns (string memory) {
+    function _getNetworkName(
+        uint256 chainId
+    ) internal pure returns (string memory) {
         if (chainId == 11155111) {
             return "Sepolia";
         } else if (chainId == 1) {

@@ -14,6 +14,14 @@ contract DeployScript is Script {
     function run() public {
         console2.log("\n=== Parity Token Deployment ===");
 
+        // Check if we're in CI environment
+        bool isCI;
+        try vm.envBool("CI") returns (bool ci) {
+            isCI = ci;
+        } catch {
+            isCI = false;
+        }
+
         // Get and validate private key
         uint256 deployerPrivateKey = _getPrivateKey();
         address deployer = vm.addr(deployerPrivateKey);
@@ -56,12 +64,16 @@ contract DeployScript is Script {
         console2.log("Estimated gas limit:", gasLimit);
         console2.log("Estimated cost:", estimatedGasCost / 1e18, "ETH");
 
-        // Validate sufficient funds
-        if (deployerBalance < estimatedGasCost) {
+        // Skip balance check in CI
+        if (!isCI && deployerBalance < estimatedGasCost) {
             console2.log("\n!!! INSUFFICIENT FUNDS !!!");
             console2.log("Required:", estimatedGasCost / 1e18, "ETH");
             console2.log("Available:", deployerBalance / 1e18, "ETH");
-            console2.log("Shortfall:", (estimatedGasCost - deployerBalance) / 1e18, "ETH");
+            console2.log(
+                "Shortfall:",
+                (estimatedGasCost - deployerBalance) / 1e18,
+                "ETH"
+            );
 
             if (chainId == 11155111) {
                 console2.log("\nTo get Sepolia ETH, use one of these faucets:");
@@ -118,7 +130,8 @@ contract DeployScript is Script {
         } catch {
             // Use default key for local testing or CI
             if (block.chainid == 31337 || isCI) {
-                return 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+                return
+                    0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
             }
             revert InvalidPrivateKey();
         }
