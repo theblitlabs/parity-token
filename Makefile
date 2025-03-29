@@ -4,7 +4,7 @@ all: install build test
 
 # Install and update dependencies
 install:
-	git submodule update --init --recursive
+	forge install
 
 # Build the project
 build:
