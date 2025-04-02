@@ -102,9 +102,7 @@ contract ParityTokenTest is Test {
 
         // Attempt to mint from a non-owner address
         vm.prank(user1);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user1));
         token.mint(user2, amount);
 
         // Attempt Test with the owner address
