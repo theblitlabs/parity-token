@@ -27,7 +27,7 @@ This repository contains an ERC‑20 token implementation along with deployment 
 1. **Clone the repository with submodules:**
 
    ```bash
-   git clone --recursive https://github.com/parity-token/parity-token.git
+   git clone --recursive https://github.com/theblitlabs/parity-token.git
    cd parity-token
    ```
 
