@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {ParityToken} from "../src/ParityToken.sol";
+import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract ParityTokenTest is Test {
     ParityToken public token;
@@ -93,6 +94,24 @@ contract ParityTokenTest is Test {
         bool success = token.mint(user1, amount);
         assertTrue(success);
         assertEq(token.balanceOf(user1), amount);
+        assertEq(token.totalSupply(), INITIAL_SUPPLY + amount);
+    }
+
+    function test_MintOnlyOwner() public {
+        uint256 amount = 1000 * 10 ** 18;
+
+        // Attempt to mint from a non-owner address
+        vm.prank(user1);
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, user1)
+        );
+        token.mint(user2, amount);
+
+        // Attempt Test with the owner address
+        vm.prank(owner);
+        bool success = token.mint(user2, amount);
+        assertTrue(success);
+        assertEq(token.balanceOf(user2), amount);
         assertEq(token.totalSupply(), INITIAL_SUPPLY + amount);
     }
 
