@@ -44,7 +44,7 @@ contract ParityToken is Ownable {
         return true;
     }
 
-    function mint(address to, uint256 value) public returns (bool success) {
+    function mint(address to, uint256 value) public onlyOwner returns (bool success) {
         require(to != address(0), "Invalid recipient");
         totalSupply += value;
         balanceOf[to] += value;
