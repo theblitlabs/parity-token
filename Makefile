@@ -1,10 +1,7 @@
 .PHONY: all install build test clean deploy-local deploy-sepolia anvil transfer install-hooks format
 
 # Load environment variables from .env
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
+-include .env
 
 all: install build test
 
