@@ -39,7 +39,20 @@ This repository contains an ERC‑20 token implementation along with deployment 
 
    This will initialize and update all required submodules.
 
-2. **Dependencies:**
+2. **Install Git Hooks:**
+
+   ```bash
+   make install-hooks
+   ```
+
+   This will install pre-commit hooks for:
+
+   - Code formatting checks
+   - Linting
+   - Test execution
+   - Conventional commit message validation
+
+3. **Dependencies:**
    The project uses git submodules for dependency management:
 
    - `forge-std`: Foundry's standard library for testing and scripting
@@ -47,22 +60,24 @@ This repository contains an ERC‑20 token implementation along with deployment 
 
    Dependencies are pinned to specific commits for reproducible builds.
 
-3. **Updating Dependencies:**
-   To update all dependencies to their latest versions:
-
-   ```bash
-   make update
-   ```
-
 4. **Configure Environment Variables:**
+
    - Copy the environment template:
      ```bash
      cp .env.example .env
      ```
    - Update `.env` with your credentials:
+
      ```
-     PRIVATE_KEY="your wallet private key"
-     ANVIL_RPC_URL="your RPC URL"
+     # Network RPC URLs
+     SEPOLIA_RPC_URL="your RPC URL"
+     MAINNET_RPC_URL="your mainnet RPC URL"  # Optional
+
+     # Wallet Configuration
+     PRIVATE_KEY="your wallet private key"  # with 0x prefix
+
+     # API Keys
+     ETHERSCAN_API_KEY="your etherscan key"  # Optional, for verification
      ```
 
 ## Documentation
@@ -76,6 +91,9 @@ The project includes a Makefile for common operations. Here are the main command
 ### Development
 
 ```shell
+# Install/update dependencies
+$ make install
+
 # Build the project
 $ make build
 
@@ -90,6 +108,9 @@ $ make format
 
 # Clean build artifacts
 $ make clean
+
+# Update dependencies
+$ make update
 ```
 
 ### Deployment
@@ -101,31 +122,37 @@ $ make anvil
 # Deploy to local network
 $ make deploy-local
 
-# Deploy to Sepolia testnet
-$ make deploy-sepolia SEPOLIA_RPC_URL="your-rpc-url" PRIVATE_KEY="your-private-key"
+# Deploy to Sepolia testnet (requires .env configuration)
+$ make deploy-sepolia
 
-# Transfer tokens
-$ make transfer-sepolia ADDRESS="recipient-address" AMOUNT="amount" TOKEN_ADDRESS="token-address" SEPOLIA_RPC_URL="your-rpc-url" PRIVATE_KEY="your-private-key"
+# Transfer tokens locally
+$ make transfer-local ADDRESS="recipient-address" AMOUNT="amount"
+
+# Transfer tokens on Sepolia
+$ make transfer-sepolia ADDRESS="recipient-address" AMOUNT="amount"
 ```
 
 The deployment script will:
 
 1. Detect the network automatically
-2. Estimate gas costs
-3. Validate wallet balance
-4. Show detailed deployment progress
-5. Provide verification instructions
+2. Use environment variables from `.env` for configuration
+3. Estimate gas costs
+4. Validate wallet balance
+5. Show detailed deployment progress
+6. Provide verification instructions
 
 The transfer script will:
 
-1. Validate addresses and amounts
-2. Check token and ETH balances
-3. Estimate gas costs
-4. Show detailed transfer status
-5. Report final balances and transaction cost
+1. Use configured token address from `.env`
+2. Validate addresses and amounts
+3. Check token and ETH balances
+4. Estimate gas costs
+5. Show detailed transfer status
+6. Report final balances and transaction cost
 
 Note: For testnet operations:
 
+- Ensure your `.env` file is properly configured
 - Ensure sufficient ETH for gas (scripts will estimate costs)
 - For Sepolia testnet, the scripts will provide faucet links if needed
 

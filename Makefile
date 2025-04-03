@@ -1,4 +1,7 @@
-.PHONY: all install build test clean deploy-local deploy-sepolia anvil transfer
+.PHONY: all install build test clean deploy-local deploy-sepolia anvil transfer install-hooks format
+
+# Load environment variables from .env
+-include .env
 
 all: install build test
 
@@ -27,32 +30,68 @@ anvil:
 	anvil
 
 # Deploy to local network
-deploy-local:
+deploy-local: build
 	forge script script/Deploy.s.sol:DeployScript \
-		--rpc-url http://localhost:8545 \
+		--fork-url http://localhost:8545 \
 		--broadcast \
 		--ffi
 
 # Deploy to Sepolia
-deploy-sepolia:
+deploy-sepolia: build
+	@if [ -z "$$SEPOLIA_RPC_URL" ]; then \
+		echo "Error: SEPOLIA_RPC_URL is not set. Please check your .env file"; \
+		exit 1; \
+	fi
+	@if [ -z "$$PRIVATE_KEY" ]; then \
+		echo "Error: PRIVATE_KEY is not set. Please check your .env file"; \
+		exit 1; \
+	fi
 	forge script script/Deploy.s.sol:DeployScript \
-		--rpc-url ${SEPOLIA_RPC_URL} \
-		--private-key ${PRIVATE_KEY} \
+		--fork-url "$$SEPOLIA_RPC_URL" \
+		--private-key "$$PRIVATE_KEY" \
 		--broadcast \
-		--verify
+		--verify \
+		--ffi
 
 # Transfer tokens (Usage: make transfer ADDRESS=0x... AMOUNT=1000)
-transfer:
+transfer-local: build
+	@if [ -z "$(ADDRESS)" ]; then \
+		echo "Error: ADDRESS is required. Usage: make transfer-local ADDRESS=0x... AMOUNT=1000"; \
+		exit 1; \
+	fi
+	@if [ -z "$(AMOUNT)" ]; then \
+		echo "Error: AMOUNT is required. Usage: make transfer-local ADDRESS=0x... AMOUNT=1000"; \
+		exit 1; \
+	fi
 	forge script script/Transfer.s.sol:TransferScript \
-		--rpc-url http://localhost:8545 \
-		--broadcast
+		--fork-url http://localhost:8545 \
+		--broadcast \
+		--ffi
 
-# Transfer tokens (Usage: make transfer-sepolia ADDRESS=0x... AMOUNT=1000 SEPOLIA_RPC_URL=https://1rpc.io/sepolia PRIVATE_KEY=0x... TOKEN_ADDRESS=0x...)
-transfer-sepolia:
+# Transfer tokens on Sepolia (Usage: make transfer-sepolia ADDRESS=0x... AMOUNT=1000)
+transfer-sepolia: build
+	@if [ -z "$$SEPOLIA_RPC_URL" ]; then \
+		echo "Error: SEPOLIA_RPC_URL is not set. Please check your .env file"; \
+		exit 1; \
+	fi
+	@if [ -z "$$PRIVATE_KEY" ]; then \
+		echo "Error: PRIVATE_KEY is not set. Please check your .env file"; \
+		exit 1; \
+	fi
+	@if [ -z "$(ADDRESS)" ]; then \
+		echo "Error: ADDRESS is required. Usage: make transfer-sepolia ADDRESS=0x... AMOUNT=1000"; \
+		exit 1; \
+	fi
+	@if [ -z "$(AMOUNT)" ]; then \
+		echo "Error: AMOUNT is required. Usage: make transfer-sepolia ADDRESS=0x... AMOUNT=1000"; \
+		exit 1; \
+	fi
 	forge script script/Transfer.s.sol:TransferScript \
-		--rpc-url ${SEPOLIA_RPC_URL} \
-		--private-key ${PRIVATE_KEY} \
-		--broadcast
+		--fork-url "$$SEPOLIA_RPC_URL" \
+		--private-key "$$PRIVATE_KEY" \
+		--broadcast \
+		--verify \
+		--ffi
 
 # Format code
 format:
@@ -61,3 +100,10 @@ format:
 # Update dependencies to their latest versions
 update:
 	git submodule update --remote --merge
+
+# Install git hooks
+install-hooks:
+	@echo "Installing git hooks..."
+	@chmod +x .githooks/*
+	@git config core.hooksPath .githooks
+	@echo "Git hooks installed successfully"
