@@ -10,38 +10,20 @@ contract DeployScript is Script {
 
     error InsufficientFunds(uint256 required, uint256 available);
     error InvalidPrivateKey();
+    error EnvironmentError(string message);
 
     function run() public {
         console2.log("\n=== Parity Token Deployment ===");
 
         // Check if we're in CI environment
-        bool isCI;
-        try vm.envBool("CI") returns (bool ci) {
-            isCI = ci;
-        } catch {
-            isCI = false;
-        }
+        bool isCI = _isCI();
 
         // Get and validate private key
         uint256 deployerPrivateKey = _getPrivateKey();
         address deployer = vm.addr(deployerPrivateKey);
 
         // Get network info
-        uint256 chainId;
-        string memory network;
-        try vm.envUint("CHAIN_ID") returns (uint256 id) {
-            chainId = id;
-        } catch {
-            chainId = block.chainid;
-        }
-
-        if (chainId == 11155111) {
-            network = "Sepolia";
-        } else if (chainId == 1) {
-            network = "Mainnet";
-        } else {
-            network = "Local/Custom";
-        }
+        (uint256 chainId, string memory network) = _getNetworkInfo();
 
         console2.log("\n=== Network Information ===");
         console2.log("Network:", network);
@@ -91,34 +73,56 @@ contract DeployScript is Script {
 
         vm.stopBroadcast();
 
+        // Save token address to .env if not in CI
+        if (!isCI) {
+            _saveTokenAddress(address(token));
+        }
+
         console2.log("\n=== Deployment Successful! ===");
         console2.log("Token address:", address(token));
         console2.log("Owner:", deployer);
 
         // Deployment verification instructions
         if (chainId == 11155111 || chainId == 1) {
+            string memory etherscanKey = vm.envOr("ETHERSCAN_API_KEY", string(""));
             console2.log("\n=== Next Steps ===");
-            console2.log("1. Save your token address");
+            console2.log("1. Token address saved to .env");
             console2.log("2. To verify on Etherscan, run:");
-            console2.log(
-                string.concat(
-                    "   forge verify-contract ",
-                    vm.toString(address(token)),
-                    " ParityToken --chain ",
-                    vm.toString(chainId)
-                )
-            );
+
+            if (bytes(etherscanKey).length > 0) {
+                console2.log(
+                    string.concat(
+                        "   forge verify-contract ",
+                        vm.toString(address(token)),
+                        " ParityToken --chain ",
+                        vm.toString(chainId),
+                        " --api-key ",
+                        etherscanKey
+                    )
+                );
+            } else {
+                console2.log(
+                    string.concat(
+                        "   forge verify-contract ",
+                        vm.toString(address(token)),
+                        " ParityToken --chain ",
+                        vm.toString(chainId)
+                    )
+                );
+            }
+        }
+    }
+
+    function _isCI() internal view returns (bool) {
+        try vm.envBool("CI") returns (bool ci) {
+            return ci;
+        } catch {
+            return false;
         }
     }
 
     function _getPrivateKey() internal view returns (uint256) {
-        // Check if we're in CI environment
-        bool isCI;
-        try vm.envBool("CI") returns (bool ci) {
-            isCI = ci;
-        } catch {
-            isCI = false;
-        }
+        bool isCI = _isCI();
 
         try vm.envUint("PRIVATE_KEY") returns (uint256 key) {
             if (key == 0) revert InvalidPrivateKey();
@@ -132,8 +136,37 @@ contract DeployScript is Script {
         }
     }
 
+    function _getNetworkInfo() internal view returns (uint256 chainId, string memory network) {
+        try vm.envUint("CHAIN_ID") returns (uint256 id) {
+            chainId = id;
+        } catch {
+            chainId = block.chainid;
+        }
+
+        if (chainId == 11155111) {
+            network = "Sepolia";
+        } else if (chainId == 1) {
+            network = "Mainnet";
+        } else {
+            network = "Local/Custom";
+        }
+    }
+
     function _getGasPrice() internal view returns (uint256) {
         // Use higher gas price estimation for safety
         return (block.basefee * 12) / 10; // 120% of base fee
+    }
+
+    function _saveTokenAddress(address token) internal {
+        string[] memory inputs = new string[](4);
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = string.concat("sed -i '' 's/^TOKEN_ADDRESS=.*$/TOKEN_ADDRESS=", vm.toString(token), "/' .env");
+
+        try vm.ffi(inputs) {
+            console2.log("Token address saved to .env");
+        } catch {
+            console2.log("Warning: Could not save token address to .env");
+        }
     }
 }

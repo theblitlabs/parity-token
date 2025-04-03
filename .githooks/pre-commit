@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Store the root directory of the project
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+# Change to the root directory
+cd "$ROOT_DIR" || exit 1
+
+echo "Running pre-commit hooks..."
+
+# Run linting checks
+if ! ./.githooks/lint-check.sh; then
+    exit 1
+fi
+
+# Run tests
+if ! ./.githooks/run-tests.sh; then
+    exit 1
+fi
+
+echo "✓ All pre-commit checks passed"
+exit 0 
