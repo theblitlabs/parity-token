@@ -22,6 +22,11 @@ This repository contains an ERC‑20 token implementation along with deployment 
   - Network-aware error messages
 - **Environment Management**: Uses environment variables for secure handling of sensitive configurations.
 
+## Deployed Contracts
+
+- **Sepolia Network**:
+  - Token Address (Proxy): `0x844303bcC1a347bE6B409Ae159b4040d84876024`
+
 ## Prerequisites
 
 - [Foundry](https://book.getfoundry.sh/getting-started/installation.html) installed
