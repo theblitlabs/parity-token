@@ -1,4 +1,4 @@
-.PHONY: all install build test clean deploy-local deploy-sepolia anvil transfer install-hooks format
+.PHONY: all install build test clean deploy-upgradeable-local deploy-upgradeable-sepolia upgrade-local upgrade-sepolia anvil transfer install-hooks format
 
 # Load environment variables from .env
 -include .env
@@ -29,15 +29,15 @@ clean:
 anvil:
 	anvil
 
-# Deploy to local network
-deploy-local: build
-	forge script script/Deploy.s.sol:DeployScript \
+# Deploy upgradeable contract to local network
+deploy-upgradeable-local: build
+	forge script script/DeployUpgradeable.s.sol:DeployUpgradeable \
 		--fork-url http://localhost:8545 \
 		--broadcast \
 		--ffi
 
-# Deploy to Sepolia
-deploy-sepolia: build
+# Deploy upgradeable contract to Sepolia
+deploy-upgradeable-sepolia: build
 	@if [ -z "$$SEPOLIA_RPC_URL" ]; then \
 		echo "Error: SEPOLIA_RPC_URL is not set. Please check your .env file"; \
 		exit 1; \
@@ -46,7 +46,47 @@ deploy-sepolia: build
 		echo "Error: PRIVATE_KEY is not set. Please check your .env file"; \
 		exit 1; \
 	fi
-	forge script script/Deploy.s.sol:DeployScript \
+	forge script script/DeployUpgradeable.s.sol:DeployUpgradeable \
+		--fork-url "$$SEPOLIA_RPC_URL" \
+		--private-key "$$PRIVATE_KEY" \
+		--broadcast \
+		--verify \
+		--ffi
+
+# Upgrade contract on local network
+upgrade-local: build
+	@if [ -z "$$PROXY_ADDRESS" ]; then \
+		echo "Error: PROXY_ADDRESS is not set. Please deploy the contract first"; \
+		exit 1; \
+	fi
+	@if [ -z "$$IMPLEMENTATION_ADDRESS" ]; then \
+		echo "Error: IMPLEMENTATION_ADDRESS is not set. Please deploy the new implementation first"; \
+		exit 1; \
+	fi
+	forge script script/UpgradeToken.s.sol:UpgradeToken \
+		--fork-url http://localhost:8545 \
+		--broadcast \
+		--ffi
+
+# Upgrade contract on Sepolia
+upgrade-sepolia: build
+	@if [ -z "$$SEPOLIA_RPC_URL" ]; then \
+		echo "Error: SEPOLIA_RPC_URL is not set. Please check your .env file"; \
+		exit 1; \
+	fi
+	@if [ -z "$$PRIVATE_KEY" ]; then \
+		echo "Error: PRIVATE_KEY is not set. Please check your .env file"; \
+		exit 1; \
+	fi
+	@if [ -z "$$PROXY_ADDRESS" ]; then \
+		echo "Error: PROXY_ADDRESS is not set. Please deploy the contract first"; \
+		exit 1; \
+	fi
+	@if [ -z "$$IMPLEMENTATION_ADDRESS" ]; then \
+		echo "Error: IMPLEMENTATION_ADDRESS is not set. Please deploy the new implementation first"; \
+		exit 1; \
+	fi
+	forge script script/UpgradeToken.s.sol:UpgradeToken \
 		--fork-url "$$SEPOLIA_RPC_URL" \
 		--private-key "$$PRIVATE_KEY" \
 		--broadcast \
