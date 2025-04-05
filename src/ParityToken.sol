@@ -15,11 +15,7 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => mapping(address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -42,21 +38,14 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return true;
     }
 
-    function approve(
-        address spender,
-        uint256 value
-    ) public returns (bool success) {
+    function approve(address spender, uint256 value) public returns (bool success) {
         require(spender != address(0), "Invalid spender");
         allowance[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public returns (bool success) {
+    function transferFrom(address from, address to, uint256 value) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(value <= balanceOf[from], "Insufficient balance");
         require(value <= allowance[from][msg.sender], "Allowance exceeded");
@@ -65,10 +54,7 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return true;
     }
 
-    function mint(
-        address to,
-        uint256 value
-    ) public onlyOwner returns (bool success) {
+    function mint(address to, uint256 value) public onlyOwner returns (bool success) {
         require(to != address(0), "Invalid recipient");
         totalSupply += value;
         balanceOf[to] += value;
@@ -84,22 +70,14 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return true;
     }
 
-    function transferWithData(
-        address to,
-        uint256 value,
-        bytes memory
-    ) public returns (bool success) {
+    function transferWithData(address to, uint256 value, bytes memory) public returns (bool success) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
         _transfer(msg.sender, to, value);
         return true;
     }
 
-    function transferWithDataAndCallback(
-        address to,
-        uint256 value,
-        bytes memory data
-    ) public returns (bool) {
+    function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
         require(to.code.length > 0, "Recipient must be a contract");
@@ -109,29 +87,18 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         // Perform the callback
         (bool callSuccess, bytes memory returnData) = to.call(data);
-        require(
-            callSuccess,
-            returnData.length > 0
-                ? _getRevertMsg(returnData)
-                : "Callback failed"
-        );
+        require(callSuccess, returnData.length > 0 ? _getRevertMsg(returnData) : "Callback failed");
 
         return true;
     }
 
-    function _getRevertMsg(
-        bytes memory returnData
-    ) internal pure returns (string memory) {
+    function _getRevertMsg(bytes memory returnData) internal pure returns (string memory) {
         if (returnData.length < 68) return "Transaction reverted silently";
         bytes memory revertData = slice(returnData, 4, returnData.length - 4);
         return abi.decode(revertData, (string));
     }
 
-    function slice(
-        bytes memory data,
-        uint256 start,
-        uint256 length
-    ) internal pure returns (bytes memory result) {
+    function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory result) {
         require(start + length <= data.length, "Slice out of bounds");
         result = new bytes(length);
         for (uint256 i = 0; i < length; i++) {
@@ -147,7 +114,5 @@ contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     /// @dev Required override for UUPS proxy pattern
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

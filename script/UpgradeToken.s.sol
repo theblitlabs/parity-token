@@ -1,88 +1,82 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
 import {ParityToken} from "../src/ParityToken.sol";
 import {UUPSUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {stdJson} from "forge-std/StdJson.sol";
 
 contract UpgradeToken is Script {
+    using stdJson for string;
+
     function run() external {
-        // Load environment variables
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address proxyAddress = vm.envAddress("PROXY_ADDRESS");
-        address newImplementationAddress = vm.envAddress(
-            "IMPLEMENTATION_ADDRESS"
-        );
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Cast proxy to UUPSUpgradeable to call upgradeTo
-        UUPSUpgradeable proxy = UUPSUpgradeable(proxyAddress);
+        // Deploy new implementation (uninitialized)
+        ParityToken newImplementation = new ParityToken();
 
-        // Upgrade to new implementation
-        proxy.upgradeTo(newImplementationAddress);
+        // Upgrade proxy to new implementation (no initialization needed)
+        UUPSUpgradeable(proxyAddress).upgradeToAndCall(address(newImplementation), "");
 
         vm.stopBroadcast();
 
-        // Update .env file with new implementation address
         string memory path = ".env";
         string memory envContents = vm.readFile(path);
 
-        // Replace or add IMPLEMENTATION_ADDRESS
         vm.writeFile(
-            path,
-            _replaceOrAddEnvVar(
-                envContents,
-                "IMPLEMENTATION_ADDRESS",
-                vm.toString(newImplementationAddress)
-            )
+            path, _replaceOrAddEnvVar(envContents, "IMPLEMENTATION_ADDRESS", vm.toString(address(newImplementation)))
         );
 
-        console2.log(
-            "Proxy upgraded to new implementation at:",
-            newImplementationAddress
-        );
-        console2.log(
-            "Environment file updated with new implementation address"
-        );
+        console2.log("New implementation deployed at:", address(newImplementation));
+        console2.log("Proxy upgraded at:", proxyAddress);
+        console2.log("Environment file updated with new implementation address");
     }
 
-    function _replaceOrAddEnvVar(
-        string memory envContents,
-        string memory key,
-        string memory value
-    ) internal pure returns (string memory) {
+    function _replaceOrAddEnvVar(string memory envContents, string memory key, string memory value)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory keyBytes = bytes(key);
         bytes memory envBytes = bytes(envContents);
 
-        // Try to find the key in the current contents
         uint256 keyIndex = _indexOf(envBytes, keyBytes);
 
         if (keyIndex == type(uint256).max) {
-            // Key not found, append new line
             return string.concat(envContents, key, "=", value, "\n");
         } else {
-            // Key found, replace the value
-            uint256 valueStart = keyIndex + keyBytes.length + 1; // +1 for '='
-            uint256 lineEnd = _indexOf(envBytes[valueStart:], "\n");
-            if (lineEnd == type(uint256).max) {
+            uint256 valueStart = keyIndex + keyBytes.length + 1;
+
+            bytes memory before = new bytes(valueStart);
+            for (uint256 i = 0; i < valueStart; i++) {
+                before[i] = envBytes[i];
+            }
+
+            uint256 lineEnd = 0;
+            for (uint256 i = valueStart; i < envBytes.length; i++) {
+                if (envBytes[i] == bytes1("\n")) {
+                    lineEnd = i - valueStart;
+                    break;
+                }
+            }
+            if (lineEnd == 0) {
                 lineEnd = envBytes.length - valueStart;
             }
 
-            return
-                string.concat(
-                    string(envBytes[:valueStart]),
-                    value,
-                    string(envBytes[valueStart + lineEnd:])
-                );
+            bytes memory remaining = new bytes(envBytes.length - (valueStart + lineEnd));
+            for (uint256 i = 0; i < remaining.length; i++) {
+                remaining[i] = envBytes[valueStart + lineEnd + i];
+            }
+
+            return string.concat(string(before), value, string(remaining));
         }
     }
 
-    function _indexOf(
-        bytes memory data,
-        bytes memory pattern
-    ) internal pure returns (uint256) {
+    function _indexOf(bytes memory data, bytes memory pattern) internal pure returns (uint256) {
         if (pattern.length == 0) return 0;
         if (data.length < pattern.length) return type(uint256).max;
 
