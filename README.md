@@ -5,6 +5,11 @@ This repository contains an ERC‑20 token implementation along with deployment 
 ## Features
 
 - **ERC‑20 Standard Token**: Secure implementation using OpenZeppelin's audited contracts.
+- **UUPS Upgradeable Pattern**:
+  - Secure contract upgrades using OpenZeppelin's UUPS pattern
+  - Proxy contract for maintaining contract address
+  - Access-controlled upgrade mechanism
+  - Storage-compatible upgrades
 - **Enhanced Deployment Scripts**:
   - Automatic network detection (Sepolia/Mainnet/Local)
   - Gas cost estimation and balance validation
@@ -78,6 +83,11 @@ This repository contains an ERC‑20 token implementation along with deployment 
 
      # API Keys
      ETHERSCAN_API_KEY="your etherscan key"  # Optional, for verification
+
+     # Contract Information (Auto-populated by deployment scripts)
+     TOKEN_ADDRESS=  # Will be set automatically after deployment
+     PROXY_ADDRESS=  # Will be set automatically after deployment
+     IMPLEMENTATION_ADDRESS=  # Will be set automatically after deployment
      ```
 
 ## Documentation
@@ -119,11 +129,11 @@ $ make update
 # Start local node
 $ make anvil
 
-# Deploy to local network
-$ make deploy-local
+# Deploy upgradeable contract locally
+$ make deploy-upgradeable-local
 
-# Deploy to Sepolia testnet (requires .env configuration)
-$ make deploy-sepolia
+# Deploy upgradeable contract to Sepolia
+$ make deploy-upgradeable-sepolia
 
 # Transfer tokens locally
 $ make transfer-local ADDRESS="recipient-address" AMOUNT="amount"
@@ -131,6 +141,71 @@ $ make transfer-local ADDRESS="recipient-address" AMOUNT="amount"
 # Transfer tokens on Sepolia
 $ make transfer-sepolia ADDRESS="recipient-address" AMOUNT="amount"
 ```
+
+### Contract Upgrades
+
+The ParityToken contract uses the UUPS (Universal Upgradeable Proxy Standard) pattern for upgrades. This allows the contract logic to be upgraded while maintaining the same address and state.
+
+#### Initial Deployment
+
+The initial deployment creates two contracts:
+
+1. The implementation contract (`ParityToken`)
+2. The proxy contract that delegates calls to the implementation
+
+```shell
+# Deploy upgradeable contract locally
+$ make deploy-upgradeable-local
+
+# Or deploy to Sepolia
+$ make deploy-upgradeable-sepolia
+```
+
+The deployment script will automatically:
+
+1. Deploy the implementation contract
+2. Deploy the proxy contract
+3. Initialize the contract with initial settings
+4. Update your `.env` file with:
+   - `PROXY_ADDRESS`: The address of your proxy contract
+   - `IMPLEMENTATION_ADDRESS`: The address of the implementation
+   - `TOKEN_ADDRESS`: Same as proxy address (for convenience)
+
+#### Upgrading the Contract
+
+When you need to upgrade the contract:
+
+1. Create a new version of the contract (e.g., `ParityTokenV2.sol`) with your changes
+2. Ensure it maintains storage compatibility with the previous version
+3. Deploy the new implementation:
+
+   ```shell
+   # Deploy locally
+   $ make deploy-upgradeable-local
+
+   # Or deploy to Sepolia
+   $ make deploy-upgradeable-sepolia
+   ```
+
+   This will automatically update `IMPLEMENTATION_ADDRESS` in your `.env`
+
+4. Run the upgrade command:
+
+   ```shell
+   # Upgrade locally
+   $ make upgrade-local
+
+   # Or upgrade on Sepolia
+   $ make upgrade-sepolia
+   ```
+
+Note:
+
+- Only the contract owner can perform upgrades
+- The upgrade process is atomic - either it succeeds completely or reverts
+- All contract state is preserved during upgrades
+- The proxy address remains the same, so users don't need to update their token address
+- Storage layout must be preserved between versions
 
 The deployment script will:
 
@@ -240,4 +315,4 @@ Contributions are welcome! Please open an issue or submit a pull request if you 
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).

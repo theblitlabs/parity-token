@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {UUPSUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-contract ParityToken is Ownable {
+contract ParityToken is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     string public constant name = "Parity Token";
     string public constant symbol = "PRTY";
     uint8 public constant decimals = 18;
@@ -15,7 +17,15 @@ contract ParityToken is Ownable {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 
-    constructor(uint256 initialSupply) Ownable(msg.sender) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(uint256 initialSupply) public initializer {
+        __Ownable_init(msg.sender);
+        __UUPSUpgradeable_init();
+
         totalSupply = initialSupply;
         balanceOf[msg.sender] = initialSupply;
         emit Transfer(address(0), msg.sender, initialSupply);
@@ -67,13 +77,6 @@ contract ParityToken is Ownable {
         return true;
     }
 
-    /// @notice Transfer tokens with additional data and callback
-    /// @dev This function performs a callback after the transfer.
-    ///      The receiving contract MUST implement a callback function.
-    /// @param to The recipient address
-    /// @param value The amount of tokens to transfer
-    /// @param data The callback data to be passed to the recipient
-    /// @return True if transfer and callback succeeded
     function transferWithDataAndCallback(address to, uint256 value, bytes memory data) public returns (bool) {
         require(to != address(0), "Invalid recipient");
         require(balanceOf[msg.sender] >= value, "Insufficient balance");
@@ -89,22 +92,12 @@ contract ParityToken is Ownable {
         return true;
     }
 
-    /// @dev Extract revert message from return data
-    /// @param returnData The return data from the call
-    /// @return The revert message string
     function _getRevertMsg(bytes memory returnData) internal pure returns (string memory) {
-        // If the returnData length is less than 68, then the transaction failed silently (without a revert message)
         if (returnData.length < 68) return "Transaction reverted silently";
-        // Extract the revert message
         bytes memory revertData = slice(returnData, 4, returnData.length - 4);
         return abi.decode(revertData, (string));
     }
 
-    /// @dev Slice a bytes array
-    /// @param data The bytes array to slice
-    /// @param start The start index
-    /// @param length The length to slice
-    /// @return result The sliced bytes array
     function slice(bytes memory data, uint256 start, uint256 length) internal pure returns (bytes memory result) {
         require(start + length <= data.length, "Slice out of bounds");
         result = new bytes(length);
@@ -119,4 +112,7 @@ contract ParityToken is Ownable {
         balanceOf[to] += value;
         emit Transfer(from, to, value);
     }
+
+    /// @dev Required override for UUPS proxy pattern
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }

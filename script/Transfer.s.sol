@@ -11,6 +11,7 @@ contract TransferScript is Script {
     error InvalidAddress();
     error InvalidAmount();
     error TransferFailed();
+    error SelfTransfer();
 
     function run() public {
         console2.log("\n=== Parity Token Transfer ===");
@@ -34,7 +35,14 @@ contract TransferScript is Script {
         // Get and validate recipient address
         address recipient = _getRecipientAddress();
         if (recipient == address(0)) revert InvalidAddress();
-        if (recipient == sender) revert InvalidAddress();
+
+        // Prevent sending to self
+        if (recipient == sender) {
+            console2.log("\n!!! ERROR: Cannot send tokens to yourself !!!");
+            console2.log("Sender address:", sender);
+            console2.log("Recipient address:", recipient);
+            revert SelfTransfer();
+        }
 
         // Get and validate amount
         uint256 amount = _getAmount();
@@ -151,8 +159,12 @@ contract TransferScript is Script {
     }
 
     function _getRecipientAddress() internal view returns (address) {
-        try vm.envAddress("ADDRESS") returns (address addr) {
-            return addr;
+        try vm.envString("ADDRESS") returns (string memory addrStr) {
+            // If address doesn't start with 0x, add it
+            if (bytes(addrStr).length >= 2 && !(bytes(addrStr)[0] == "0" && bytes(addrStr)[1] == "x")) {
+                addrStr = string.concat("0x", addrStr);
+            }
+            return vm.parseAddress(addrStr);
         } catch {
             revert InvalidAddress();
         }

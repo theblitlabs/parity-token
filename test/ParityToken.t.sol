@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console2} from "forge-std/Test.sol";
 import {ParityToken} from "../src/ParityToken.sol";
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ParityTokenProxy} from "../src/ParityTokenProxy.sol";
 
 contract ParityTokenTest is Test {
     ParityToken public token;
@@ -19,7 +20,18 @@ contract ParityTokenTest is Test {
         owner = address(this);
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
-        token = new ParityToken(INITIAL_SUPPLY);
+
+        // Deploy implementation
+        ParityToken implementation = new ParityToken();
+
+        // Prepare initialization data
+        bytes memory initData = abi.encodeWithSelector(ParityToken.initialize.selector, INITIAL_SUPPLY);
+
+        // Deploy proxy
+        ParityTokenProxy proxy = new ParityTokenProxy(address(implementation), initData);
+
+        // Setup token interface
+        token = ParityToken(address(proxy));
 
         // Fund users with some ETH for gas
         vm.deal(user1, 1 ether);
@@ -163,7 +175,11 @@ contract ParityTokenTest is Test {
 contract MockCallback {
     bool public callbackReceived;
 
-    function onTokenReceived(address, /* from */ uint256 /* amount */ ) external {
+    function onTokenReceived(
+        address,
+        /* from */
+        uint256 /* amount */
+    ) external {
         callbackReceived = true;
     }
 }
