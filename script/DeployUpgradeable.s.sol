@@ -13,8 +13,32 @@ contract DeployUpgradeable is Script {
     // Initial supply of 100 million tokens with 18 decimals
     uint256 public constant INITIAL_SUPPLY = 100_000_000 * 10 ** 18;
 
+    // Default Anvil private key (for testing only)
+    uint256 constant ANVIL_PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        uint256 deployerPrivateKey;
+
+        // Try to get private key from environment variable
+        try vm.envString("PRIVATE_KEY") returns (string memory rawKey) {
+            if (bytes(rawKey).length > 0) {
+                bytes memory rawKeyBytes = bytes(rawKey);
+                if (rawKeyBytes.length >= 2 && rawKeyBytes[0] == "0" && rawKeyBytes[1] == "x") {
+                    deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+                } else {
+                    deployerPrivateKey = vm.parseUint(string.concat("0x", rawKey));
+                }
+            }
+        } catch {}
+
+        // If no environment variable, use default Anvil key for testing
+        if (deployerPrivateKey == 0) {
+            deployerPrivateKey = ANVIL_PRIVATE_KEY;
+            console2.log("Using default Anvil private key for testing");
+        }
+
+        require(deployerPrivateKey != 0, "Invalid private key");
+
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy implementation
@@ -28,19 +52,21 @@ contract DeployUpgradeable is Script {
 
         vm.stopBroadcast();
 
-        // Update .env file with new addresses
-        string memory path = ".env";
-        string memory envContents = vm.readFile(path);
-
-        // Update all addresses in one read/write cycle
-        envContents = _replaceOrAddEnvVar(envContents, "PROXY_ADDRESS", vm.toString(address(proxy)));
-        envContents = _replaceOrAddEnvVar(envContents, "TOKEN_ADDRESS", vm.toString(address(proxy)));
-        envContents = _replaceOrAddEnvVar(envContents, "IMPLEMENTATION_ADDRESS", vm.toString(address(implementation)));
-        vm.writeFile(path, envContents);
-
+        // Log deployment addresses
         console2.log("Implementation deployed at:", address(implementation));
         console2.log("Proxy deployed at:", address(proxy));
-        console2.log("Environment file updated with new addresses");
+
+        // Try to update .env file if we have access
+        try vm.readFile(".env") returns (string memory envContents) {
+            envContents = _replaceOrAddEnvVar(envContents, "PROXY_ADDRESS", vm.toString(address(proxy)));
+            envContents = _replaceOrAddEnvVar(envContents, "TOKEN_ADDRESS", vm.toString(address(proxy)));
+            envContents =
+                _replaceOrAddEnvVar(envContents, "IMPLEMENTATION_ADDRESS", vm.toString(address(implementation)));
+            vm.writeFile(".env", envContents);
+            console2.log("Environment file updated with new addresses");
+        } catch {
+            console2.log("Note: Could not update .env file (this is normal in CI)");
+        }
     }
 
     function _replaceOrAddEnvVar(string memory envContents, string memory key, string memory value)

@@ -37,11 +37,11 @@ jobs:
         run: cp .env.example .env
 
       - name: Verify deployment script compilation
-        run: forge script script/Deploy.s.sol:DeployScript -vvv
+        run: forge script script/DeployUpgradeable.s.sol:DeployUpgradeable -vvv
 
       - name: Run deployment simulation
         run: |
-          forge script script/Deploy.s.sol:DeployScript \
+          forge script script/DeployUpgradeable.s.sol:DeployUpgradeable \
           --fork-url https://eth-sepolia.public.blastapi.io \
           -vvv
 
